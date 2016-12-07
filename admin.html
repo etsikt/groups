@@ -1,0 +1,47 @@
+<html>
+   <head>
+	  <meta charset="utf-8">
+	  <meta name="viewport" content="width=device-width, initial-scale=1">
+	  <script src="/socket.io/socket.io.js"></script>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+      <link rel="stylesheet" href="css/style.css">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+   </head>
+   <body>
+      <h2>Gruppeinndeling</h2>
+      Vent til alle deltakerne har meldt seg på her: <button class="btn-lg btn-primary" id="address"></button>
+      <p>Del deretter inn i grupper.</p>
+      Secret code:<input type="password" id="pw"></input>
+      Number of groups:<input type="text" id="noOfGroups"></input>
+      <button class="btn btn-success" id="divide">Divide in groups</button>
+
+      <h2>Deltakere</h2>
+      <div id="allUsers">
+      </div>
+      <hr/>
+
+      <h2>Grupper</h2>
+	  <div id="json" class="container-fluid">
+			<div id="groups" class="row"></div>      	
+		    </div>
+	  </div>
+    <script>
+         // at document read (runs only ones).
+         $(document).ready(function(){
+         
+         	$("button#address").html(window.location.host);
+         
+            $("button#divide").click(function(){
+	            $('div#groups').html("");
+               socket.emit('divide', 
+                {
+        			pw : $("input#pw").val(),
+			    	noOfGroups : $("input#noOfGroups").val()
+				});
+            });
+         });
+      </script>
+      <script src="js/groups.js"></script>
+   </body>
+</html>

@@ -1,0 +1,35 @@
+<html>
+   <head>
+	  <meta charset="utf-8">
+	  <meta name="viewport" content="width=device-width, initial-scale=1">
+	  <script src="/socket.io/socket.io.js"></script>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+      <link rel="stylesheet" href="css/style.css">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+   </head>
+   <body>
+      <h2>Gruppeinndeling</h2>
+      <p>Meld deg på og vent til veilederen din har delt inn i grupper.</p>
+	  	<b>Navn:</b><input type="text" size="50" id="pseudo" placeholder="Ola Nordmann"></input>	 
+	<button id="update" class="btn btn-primary">Bli med</button>
+      <h2>Deltakere</h2>
+      <div id="allUsers">
+      </div>
+      <h2>Grupper</h2>
+	  <div id="json" class="container-fluid">
+			<div id="groups" class="row"></div>      	
+		    </div>
+	  </div>
+
+    <script>
+         // at document ready (runs only ones).
+         $(document).ready(function(){
+            $("button#update").click(function(){
+               socket.emit('newUser', $("input#pseudo").val() );
+            });
+         });
+      </script>
+      <script src="js/groups.js"></script>
+   </body>
+</html>
