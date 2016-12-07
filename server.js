@@ -97,18 +97,25 @@ io.on('connection', function (socket) {
 
 		 var groupNo = 1;
 		 for (var i = 0; i < arrayLength; i++) {
-			console.log('Group:' + groupNo + ' Name:' + allClients[i].pseudo);
-		    io.sockets.emit('group', 
-		    {
-		    	group: groupNo,
-		    	name: allClients[i].pseudo
-		    }
-		    );
-		    groupNo++;
-		    if(groupNo > noOfGroups)
-		    {
-		    	groupNo = 1;
-		    }
+  	        if (typeof allClients[i].pseudo != 'undefined')
+			{
+				console.log('Group:' + groupNo + ' Name:' + allClients[i].pseudo);
+				io.sockets.emit('group', 
+				{
+					group: groupNo,
+					name: allClients[i].pseudo
+				}
+				);
+				groupNo++;
+				if(groupNo > noOfGroups)
+				{
+					groupNo = 1;
+				}
+			}
+			else
+			{
+				console.log('Skip undefined socket pseudo');
+			}
 		}		 
 	   });
 	   // listen for the chat even. and will recieve
