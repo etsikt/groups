@@ -17,9 +17,9 @@ app.get('/admin.html', function (req, res) {
   res.sendfile(__dirname + '/admin.html');
 });
 
-var allClients = Array();
+var allInstances = Array();
 
-function getUsers()
+function getUsers(allClients)
 {
 	var users = allClients.map(function(s) {
     	return s.pseudo;
@@ -45,13 +45,51 @@ function shuffle(array) {
   return array;
 }
 
+function makeid()
+{
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < 5; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+}
+
 io.on('connection', function (socket) {
         console.log("New connection");
-	  console.log("Emit all users");
-	  socket.emit('allUsers', getUsers());
+
+        socket.on('connect', function(id) {
+        	console.log("connect");
+        	var allClients = allInstances[id];
+		    console.log("Emit all users");
+	 		socket.emit('allUsers', getUsers(allClients));
         
-	    allClients.push(socket);
-        socket.on('newUser', function(pseudo) {
+		    allClients.push(socket);
+        });
+
+        socket.on('create', function() {
+            console.log("Create");
+        	var id = "";
+        	var idFound = false;
+        	while(!idFound)
+        	{
+        		id = makeid()
+        		if(!allInstances[id])
+        		{
+        			idFound = true;
+        		}
+        	}
+        	console.log("Id " + id);
+			var allClients = Array();
+        	allInstances[id] = allClients;
+        	socket.emit('created', id);
+		});
+		
+        socket.on('newUser', function(data) {
+        	var pseudo = data.pseudo;
+        	var id = data.code;
+        	var allClients = allInstances[id];
 	        console.log("newUser");
 	        console.log(socket.pseudo);
 
@@ -60,7 +98,7 @@ io.on('connection', function (socket) {
 	        	if(socket.pseudo != pseudo)
 	        	{
 		        	console.log("Emit changeUser");
-		            io.sockets.emit('changeUser', 
+		            allClients.emit('changeUser', 
 			        {
         				 oldName : socket.pseudo,
 			    	     newName : pseudo
@@ -69,7 +107,7 @@ io.on('connection', function (socket) {
 	        }
 	        else
 	        {
-    	        io.sockets.emit('newUser', pseudo);
+    	        allClients.emit('newUser', pseudo);
 			}
             socket.pseudo = pseudo;
 			
@@ -77,7 +115,7 @@ io.on('connection', function (socket) {
 			//Can be changed to check whether a user sent the same name twice.
 		    console.log("Emit user names:");
 	  	    console.log(getUsers());
-		    io.sockets.emit('allUsers', getUsers());
+		    allClients.emit('allUsers', getUsers());
         });
 	   socket.on('divide', function (data) {
 	     if(data.pw != "workshop")
@@ -132,10 +170,18 @@ io.on('connection', function (socket) {
 	   socket.on('disconnect', function() {
 		  console.log('Got disconnect!');
 
-		  var i = allClients.indexOf(socket);
-		  allClients.splice(i, 1);
-
-	  
+		  var bFound = false;
+		  for (var key in allInstances) {
+			console.log("key " + key);
+		  	var allClients = allInstances[key];
+		  	var i = allClients.indexOf(socket);
+		  	if(i > -1)
+		  	{
+		  	   console.log("Removing socket");
+			   allClients.splice(i, 1);
+			   break;
+			}
+		  }
 	  });
 
 

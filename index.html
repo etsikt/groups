@@ -9,9 +9,12 @@
       <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
    </head>
    <body>
+
+	   Code: <input type="text" size="10" id="code"></input>	 
+	<button id="connect" class="btn btn-primary">Connect</button>
       <h2>Gruppeinndeling</h2>
       <p>Meld deg på og vent til veilederen din har delt inn i grupper.</p>
-	  	<b>Navn:</b><input type="text" size="50" id="pseudo" placeholder="Ola Nordmann"></input>	 
+	  	<b>Name:</b><input type="text" size="50" id="pseudo" placeholder="Ola Nordmann"></input>	 
 	<button id="update" class="btn btn-primary">Bli med</button>
       <h2>Deltakere</h2>
       <div id="allUsers">
@@ -26,7 +29,14 @@
          // at document ready (runs only ones).
          $(document).ready(function(){
             $("button#update").click(function(){
-               socket.emit('newUser', $("input#pseudo").val() );
+               socket.emit('newUser', 
+               {
+	               code: $("input#code").val(),
+	               pseudo: $("input#pseudo").val()
+               });
+            });
+            $("button#connect").click(function(){
+               socket.emit('connect', $("input#code").val());
             });
          });
       </script>

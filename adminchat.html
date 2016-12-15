@@ -1,0 +1,118 @@
+<html>
+   <head>
+	  <meta charset="utf-8">
+	  <meta name="viewport" content="width=device-width, initial-scale=1">
+	  <script src="/socket.io/socket.io.js"></script>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+   </head>
+   <body>
+      <h2>Disse er med:</h2>
+      <div id="allUsers">
+      </div>
+      <hr/>
+      Number of groups:<input type="text" id="noOfGroups"></input>
+      <button id="divide">Divide in groups</button>
+      <h2>Grupper:</h2>
+	  <div id="json" class="container-fluid">
+			<div id="groups" class="row"></div>      	
+		    </div>
+	  </div>
+	  <br/>
+	  <br/>
+	  <br/>
+	  <br/>
+      <input type="text" id="pseudo"></input>
+      <button id="update">Update pseudonym</button>
+      <br/>
+      <hr/>
+      <input type="text" id="msg"></input>
+      <button id="chat">Chat</button>
+      <h2>Log</h2>
+      <button id="clear">Clear log</button>
+      <p id="data_received"></p>
+
+            <script>
+               var name = '';
+         var socket = io.connect('http://localhost:3000');
+
+		socket.on('allUsers', function(listOfUsers) {
+		    $('#allUsers').html(listOfUsers.join(" "));
+		});         
+
+/*
+				<div class="col-sm-2"> 		  
+					<div class="well">		    
+			        </div>
+  			    </div>      	
+*/
+		socket.on('noOfGroups', function(noOfGroups) {
+//			$('div#groups').append("<b>hei</b>");
+			var e = $('div#groups');
+			for(i = 1; i <= noOfGroups; i++)
+			{
+				var s = "g" + i ;
+				var g = "Gruppe " + i;
+				var l = '<button type="button" class="btn btn-primary">'+ g + '</button><br/>';
+				var h = '<div class="col-sm-2"><div class="well" id="' + s + '">'+ l + '</div></div>';
+				e.append(h);
+		    }
+			e.append('</div>');
+		});         
+
+		socket.on('group', function(group) {
+			var divid = "#g" + group.group;
+		   	$(divid).append('<button type="button" class="btn btn-success">'+group.name+"</button>");
+		});         
+
+	    socket.on('newUser', function(pseudo) {
+    	    $('#data_received').append('<p><em>' + pseudo + ' updated pseudonym !</em></p>');
+	    });
+	    socket.on('changeUser', function(data) {
+    	    $('#data_received').append('<p><em>' + data.oldName + ' changed pseudonym to ' + data.newName + '</em></p>');
+	    });
+         // at document read (runs only ones).
+         $(document).ready(function(){
+            $("button#chat").click(function(){
+	    	  console.log($("input#msg").val());
+               // send message on inputbox to server
+               socket.emit('chat', $("input#msg").val() );
+
+               // then we empty the text on the input box.
+               $("input#msg").val('');
+            });
+
+            $("button#update").click(function(){
+            	$("p#data_received").html('');
+            });
+            $("button#divide").click(function(){
+	            $('div#groups').html("");
+               socket.emit('divide', $("input#noOfGroups").val() );
+            });
+
+            $("button#update").click(function(){
+               socket.emit('newUser', $("input#pseudo").val() );
+            });
+
+         });
+
+
+
+         // listen for chat event and recieve data
+         
+          socket.on('news', function (data) {
+	    	  console.log(data);
+	      });
+          socket.on('chat', function (data) {
+	    	  console.log(data);
+				$('#data_received').append('<p><em>' + data + '</em></p>');
+         }); //dockument ready end
+
+      </script>
+
+   </body>
+
+
+
+</html>

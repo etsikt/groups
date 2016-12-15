@@ -1,0 +1,75 @@
+<html>
+   <head>
+	<script src="/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
+   </head>
+   <body>
+      <h2>Disse er med:</h2>
+      <div id="allUsers">
+      </div>
+      <hr/>
+      <input type="text" id="pseudo"></input>
+      <button id="update">Update pseudonym</button>
+      <br/>
+      <hr/>
+      <input type="text" id="msg"></input>
+      <button id="chat">Chat</button>
+      <h2>Log</h2>
+      <button id="clear">Clear log</button>
+      <p id="data_received"></p>
+
+            <script>
+               var name = '';
+         var socket = io.connect('http://localhost:3000');
+
+		socket.on('allUsers', function(listOfUsers) {
+		    $('#allUsers').html(listOfUsers.join(" "));
+		});         
+
+	    socket.on('newUser', function(pseudo) {
+    	    $('#data_received').append('<p><em>' + pseudo + ' updated pseudonym !</em></p>');
+	    });
+	    socket.on('changeUser', function(data) {
+    	    $('#data_received').append('<p><em>' + data.oldName + ' changed pseudonym to ' + data.newName + '</em></p>');
+	    });
+         // at document read (runs only ones).
+         $(document).ready(function(){
+            $("button#chat").click(function(){
+	    	  console.log($("input#msg").val());
+               // send message on inputbox to server
+               socket.emit('chat', $("input#msg").val() );
+
+               // then we empty the text on the input box.
+               $("input#msg").val('');
+            });
+
+            $("button#update").click(function(){
+            	$("p#data_received").html('');
+            });
+
+            $("button#update").click(function(){
+               socket.emit('newUser', $("input#pseudo").val() );
+            });
+
+         });
+
+
+
+         // listen for chat event and recieve data
+         
+          socket.on('news', function (data) {
+	    	  console.log(data);
+              socket.emit('newUser', $("input#pseudo").val() );
+	      });
+          socket.on('chat', function (data) {
+	    	  console.log(data);
+				$('#data_received').append('<p><em>' + data + '</em></p>');
+         }); //dockument ready end
+
+      </script>
+
+   </body>
+
+
+
+</html>
