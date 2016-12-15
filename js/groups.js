@@ -1,17 +1,49 @@
 //	    var socket = io.connect('http://localhost:3000');
 	    var socket = io.connect();
 
+		function getNameHtml(user)
+		{
+			var id = user.id;
+			var name = user.name;
+			var s = '<button type="button" class="btn space btn-primary" id="u_' + id + '">' + name + '</button>';
+			return s;
+		}
+		function getGroupMemberHtml(user)
+		{
+			var id = user.id;
+			var name = user.name;
+			var s = '<button type="button" class="btn space btn-success" id="g_' + id + '">' + name + '</button>';
+			return s;
+		}
+		
 		socket.on('allUsers', function(listOfUsers) {
 			$('#allUsers').html("");
-			listOfUsers.forEach(function (item, index) 
+			listOfUsers.forEach(function (user, index) 
 			{
-				if(item != null)
+				if(user != null)
 				{
-					var s = '<button type="button" class="btn space btn-primary">' + item + '</button>';
-				    $('#allUsers').append(s);
+				    $('#allUsers').append(getNameHtml(user));
 				}
 			});
 		});         
+		socket.on('groupsconnected', function() {
+			$('div#connected').show();
+		});
+		socket.on('newUser', function(user) {
+			$('#allUsers').append(getNameHtml(user));
+		});
+		socket.on('changeUser', function(data) {
+			var uid = "button#u_" + data.id;
+			var gid = "button#g_" + data.id;
+			$(uid).html(data.name);
+			$(gid).html(data.name);
+		});
+		socket.on('removeUser', function(data) {
+			var uid = "button#u_" + data.id;
+			var gid = "button#g_" + data.id;
+			$(uid).remove();
+			$(gid).remove();
+		});
 
 		socket.on('noOfGroups', function(noOfGroups) {
 			var e = $('div#groups');
@@ -28,11 +60,9 @@
 		});         
 
 		socket.on('group', function(group) {
-			if(group.name != null)
-			{
-				var divid = "#g" + group.group;
-			   	$(divid).append('<button type="button" class="btn space btn-success">'+group.name+"</button>");
-			}
+			var divid = "#g" + group.group;
+			var s = getGroupMemberHtml(group.user);
+		   	$(divid).append(s);
 		});         
 
 		socket.on('created', function(id) {

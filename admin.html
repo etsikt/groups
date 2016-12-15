@@ -15,7 +15,6 @@
       Vent til alle deltakerne har meldt seg på her: <button class="btn-lg btn-primary" id="address"></button>
       <p>Kode:<div id="code"></div></p>
       <p>Del deretter inn i grupper.</p>
-      Secret code:<input type="password" id="pw"></input>
       Number of groups:<input type="text" id="noOfGroups"></input>
       <button class="btn btn-success" id="divide">Divide in groups</button>
 
@@ -42,15 +41,16 @@
 
             $("button#create").click(function(){
                socket.emit('create');
-            
             });
          
             $("button#divide").click(function(){
 	            $('div#groups').html("");
+	           var code = $("div#code").text();
+	           var noOfGroups = $("input#noOfGroups").val();
                socket.emit('divide', 
                 {
-        			pw : $("input#pw").val(),
-			    	noOfGroups : $("input#noOfGroups").val()
+        			code : code,
+			    	noOfGroups : noOfGroups
 				});
             });
          });

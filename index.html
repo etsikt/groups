@@ -12,10 +12,10 @@
 
 	   Code: <input type="text" size="10" id="code"></input>	 
 	<button id="connect" class="btn btn-primary">Connect</button>
-      <h2>Gruppeinndeling</h2>
+	<div style="display: none;" id="connected">
       <p>Meld deg på og vent til veilederen din har delt inn i grupper.</p>
 	  	<b>Name:</b><input type="text" size="50" id="pseudo" placeholder="Ola Nordmann"></input>	 
-	<button id="update" class="btn btn-primary">Bli med</button>
+		<button id="update" class="btn btn-primary">Sett navn</button>
       <h2>Deltakere</h2>
       <div id="allUsers">
       </div>
@@ -24,6 +24,7 @@
 			<div id="groups" class="row"></div>      	
 		    </div>
 	  </div>
+	</div>
 
     <script>
          // at document ready (runs only ones).
@@ -36,7 +37,8 @@
                });
             });
             $("button#connect").click(function(){
-               socket.emit('connect', $("input#code").val());
+               var code = $("input#code").val();
+               socket.emit('groupsconnect', code);
             });
          });
       </script>

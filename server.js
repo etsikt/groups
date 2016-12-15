@@ -22,31 +22,19 @@ var allInstances = Array();
 
 console.log("MaxSockets: " + http.globalAgent.maxSockets);
 
-function getUsers(allClients)
+
+
+
+function getServer(code)
 {
-	var users = allClients.map(function(s) {
-    	return s.pseudo;
-	});
-	return users;
-}
-
-function shuffle(array) {
-  var currentIndex = array.length, temporaryValue, randomIndex;
-
-  // While there remain elements to shuffle...
-  while (0 !== currentIndex) {
-
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
-
-    // And swap it with the current element.
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
-  }
-
-  return array;
+	console.log("getServer " + code);
+	var server = allInstances[code];
+	if(typeof server == 'undefined')
+	{
+		console.log("No instance for " + code);
+		return false;
+	} 
+	return server;
 }
 
 function makeid()
@@ -60,16 +48,110 @@ function makeid()
     return text;
 }
 
+function getUser(s)
+{
+	var u = {
+	 id : s.id,
+	 name: s.pseudo
+	};
+	return u;
+}
+
+function createServer(id, socket)
+{
+    console.log("Create server " + id);
+	var allClients = Array();
+
+	var server = {
+      serverSocket: socket,
+      code: id,
+      allClients: allClients,
+      broadcastToAll : function(msg, data) {
+		console.log("broadcastToAll " + msg);
+		console.log("broadcastToAll " + data);
+        this.serverSocket.emit(msg, data);
+        this.broadcastToClients(msg, data);
+      },	
+      broadcastToClients : function(msg, data) {
+		console.log("broadcastToClients " + msg);
+		console.log("broadcastToClients " + data);
+		this.allClients.map(function(s) {
+    		s.emit(msg, data);
+		});
+	  },
+	  addClient : function(socket) {
+	  	this.allClients.push(socket);
+	  },
+	  isServerSocket : function(socket) {
+	    if(this.serverSocket == socket)
+	    {
+	    	console.log("Found server socket");
+	    	return true;
+	    }
+    	return false;
+	  },
+	  removeClient : function(socket) {
+	  	var i = this.allClients.indexOf(socket);
+	  	if(i > -1)
+	  	{
+	  	   console.log("Found client socket. Removing it.");
+	  	   var user = getUser(socket);
+	  	   this.broadcastToAll("removeUser", user); 
+		   this.allClients.splice(i, 1);
+		   return true;
+		}
+		return false;
+	  },
+	  getUsers : function ()
+	  {
+	    console.log("getUsers");
+		var users = this.allClients.map(function(s) {
+	        if (typeof s.pseudo != 'undefined')
+			{
+				return getUser(s);
+			}
+		});
+		console.log("getUsers " + users);
+		return users;
+	  },
+	  shuffleClients : function() {
+		  var currentIndex = this.allClients.length, temporaryValue, randomIndex;
+
+		  // While there remain elements to shuffle...
+		  while (0 !== currentIndex) {
+
+			// Pick a remaining element...
+			randomIndex = Math.floor(Math.random() * currentIndex);
+			currentIndex -= 1;
+
+			// And swap it with the current element.
+			temporaryValue = this.allClients[currentIndex];
+			this.allClients[currentIndex] = this.allClients[randomIndex];
+			this.allClients[randomIndex] = temporaryValue;
+		  }
+		  return this.allClients;
+	 }
+    };
+    allInstances[id] = server;
+    return server;
+}
+
 io.on('connection', function (socket) {
         console.log("New connection");
 
-        socket.on('connect', function(id) {
-        	console.log("connect");
-        	var allClients = allInstances[id];
+        socket.on('groupsconnect', function(code) {
+        	console.log("connect " + code);
+        	var server = getServer(code);
+        	if(!server)
+        	{
+        		return;
+        	}
 		    console.log("Emit all users");
-	 		socket.emit('allUsers', getUsers(allClients));
-        
-		    allClients.push(socket);
+		    var users = server.getUsers();
+		    console.log(users);
+	 		socket.emit('groupsconnected');
+	 		socket.emit('allUsers', users);
+		    server.addClient(socket);
         });
 
         socket.on('create', function() {
@@ -85,54 +167,55 @@ io.on('connection', function (socket) {
         		}
         	}
         	console.log("Id " + id);
-			var allClients = Array();
-        	allInstances[id] = allClients;
+        	createServer(id, socket);
         	socket.emit('created', id);
 		});
 		
         socket.on('newUser', function(data) {
-        	var pseudo = data.pseudo;
-        	var id = data.code;
-        	var allClients = allInstances[id];
 	        console.log("newUser");
-	        console.log(socket.pseudo);
+        	var pseudo = data.pseudo;
+	        console.log("pseduo " + pseudo);
+        	var code = data.code;
+        	console.log("Code " + code);
+        	var server = getServer(code);
+        	if(!server)
+        	{
+        		return;
+        	}
+        	var oldUser = getUser(socket);
 
 	        if (typeof socket.pseudo != 'undefined')
 	        {
-	        	if(socket.pseudo != pseudo)
+	        	if(socket.pseudo != pseudo) //User changed name
 	        	{
-		        	console.log("Emit changeUser");
-		            allClients.emit('changeUser', 
-			        {
-        				 oldName : socket.pseudo,
-			    	     newName : pseudo
-				    });
+		       	    socket.pseudo = pseudo;
+					var u = getUser(socket);
+		        	console.log("Broadcast changeUser");
+		            server.broadcastToAll('changeUser', u);
 				}
 	        }
-	        else
+	        else //it's a new user
 	        {
-    	        allClients.emit('newUser', pseudo);
+	       	    socket.pseudo = pseudo;
+				var u = getUser(socket);
+    	        server.broadcastToAll('newUser', u);
 			}
-            socket.pseudo = pseudo;
-			
-			//Broadcast update names for users.
-			//Can be changed to check whether a user sent the same name twice.
-		    console.log("Emit user names:");
-	  	    console.log(getUsers());
-		    allClients.emit('allUsers', getUsers());
-        });
+       });
 	   socket.on('divide', function (data) {
-	     if(data.pw != "workshop")
-	     {
-	     	return;
-	     }
+		 var code = data.code;
+		 console.log("Divide code " + code);
+		 var server = getServer(code);
+		 if(!server)
+		 {
+	 		 return;
+		 }
 	     
 		 console.log('Divide in no of groups:' + data.noOfGroups);
  	     
-		 var arr = shuffle(allClients);
+		 var allClients = server.shuffleClients();
 		 var noOfGroups = data.noOfGroups;
 		 console.log("emit noOfGroups");
- 	     io.sockets.emit('noOfGroups', noOfGroups);
+ 	     server.broadcastToAll('noOfGroups', noOfGroups);
 		 console.log('No of groups:' + noOfGroups);
 		 
 		 var arrayLength = allClients.length;
@@ -142,10 +225,11 @@ io.on('connection', function (socket) {
   	        if (typeof allClients[i].pseudo != 'undefined')
 			{
 				console.log('Group:' + groupNo + ' Name:' + allClients[i].pseudo);
-				io.sockets.emit('group', 
+				var u = getUser(allClients[i]);
+				server.broadcastToAll('group', 
 				{
 					group: groupNo,
-					name: allClients[i].pseudo
+					user: u
 				}
 				);
 				groupNo++;
@@ -177,17 +261,21 @@ io.on('connection', function (socket) {
 		  var bFound = false;
 		  for (var key in allInstances) {
 			console.log("key " + key);
-		  	var allClients = allInstances[key];
-		  	var i = allClients.indexOf(socket);
-		  	if(i > -1)
+		  	var server = getServer(key);
+		  	if(server.isServerSocket(socket))
 		  	{
-		  	   console.log("Removing socket");
-			   allClients.splice(i, 1);
+			   	var i = allInstances.indexOf(key);
+			  	if(i > -1)
+		  	    {
+		  	      console.log("Removing instance");
+			      allInstances.splice(i, 1);
+			    }
+		  		break;	
+		  	}
+		  	if(server.removeClient(socket))
+		  	{
 			   break;
 			}
 		  }
 	  });
-
-
-//	  socket.emit('news', { hello: 'world' });
 });
