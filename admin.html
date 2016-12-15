@@ -10,7 +10,7 @@
    </head>
    <body>
       <h2>Gruppeinndeling</h2>
-      Vent til alle deltakerne har meldt seg på her: <button class="btn-lg btn-primary" id="address"></button>
+      Vent til alle deltakerne har meldt seg på her: <h2 id="address"></h2>
       <p>Del deretter inn i grupper.</p>
       Secret code:<input type="password" id="pw"></input>
       Number of groups:<input type="text" id="noOfGroups"></input>
@@ -22,6 +22,11 @@
       <hr/>
 
       <h2>Grupper</h2>
+<button class="btn btn-info">Gruppe 1: RFL</button>
+<button class="btn btn-info">Gruppe 2: RFL (Kj&oslash;kken)</button>
+<button class="btn btn-info">Gruppe 3: 5. etage</button>
+<button class="btn btn-info">Gruppe 4  Kantina</button>
+<br/><br/>
 	  <div id="json" class="container-fluid">
 			<div id="groups" class="row"></div>      	
 		    </div>
@@ -29,8 +34,8 @@
     <script>
          // at document read (runs only ones).
          $(document).ready(function(){
-         
-         	$("button#address").html(window.location.host);
+        var adr = "bit.ly/digitalescape"; 
+         	$("h2#address").html('<a target="_blank" href="'+adr+'">' + adr + '</a>');//window.location.host);
          
             $("button#divide").click(function(){
 	            $('div#groups').html("");
