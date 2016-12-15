@@ -35,3 +35,7 @@
 			}
 		});         
 
+		socket.on('created', function(id) {
+		   	$("div#code").html(id);
+		});         
+

@@ -1,6 +1,7 @@
 var express = require('express');
 var app = express();
-var server = require('http').Server(app);
+var http = require('http');
+var server = http.Server(app);
 var io = require('socket.io')(server);
 
 //http://stackoverflow.com/questions/29854405/sending-array-from-server-to-client-with-socket-io
@@ -19,6 +20,8 @@ app.get('/admin.html', function (req, res) {
 
 var allInstances = Array();
 
+console.log("MaxSockets: " + http.globalAgent.maxSockets);
+
 function getUsers(allClients)
 {
 	var users = allClients.map(function(s) {
@@ -26,6 +29,7 @@ function getUsers(allClients)
 	});
 	return users;
 }
+
 function shuffle(array) {
   var currentIndex = array.length, temporaryValue, randomIndex;
 
